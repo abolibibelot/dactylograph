@@ -28,6 +28,25 @@ def filter_likely(info):
         return has_twelve(info)
     return False
 
+def merge(info):
+    raw = info[0]
+    split = info[1]
+    idx = 0
+    res = ''
+    for c in split:
+        while idx < len(raw):
+            if c == '/':
+                res += '//'
+                break
+            if c == raw[idx]:
+                res += c
+                idx += 1
+                break
+            res += raw[idx]
+            idx += 1
+    info.append(res)
+
+
 
 full_info = []
 likely = []
@@ -35,7 +54,7 @@ unlikely = []
 
 for l in open(DATA_PATH + ALL, 'r', encoding='utf8'):
     verse_info = extract_info(l)
-
+    merge(verse_info)
     full_info.append(verse_info)
     if filter_likely(verse_info):
         likely.append(verse_info)
