@@ -1,4 +1,6 @@
-DATA_PATH = "/Users/y.schwartz/poiesy/corpus/Syllaber/"
+from os import path
+
+DATA_PATH = "../tmp"
 
 ALL = "all_verses.txt"
 
@@ -52,7 +54,7 @@ full_info = []
 likely = []
 unlikely = []
 
-for l in open(DATA_PATH + ALL, 'r', encoding='utf8'):
+for l in open(path.join(DATA_PATH, ALL), 'r', encoding='utf8'):
     verse_info = extract_info(l)
     merge(verse_info)
     full_info.append(verse_info)
