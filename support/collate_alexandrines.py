@@ -1,4 +1,6 @@
 from os import path
+from lexique_helper import load_lexique
+from collections import defaultdict
 
 DATA_PATH = "../tmp"
 
@@ -6,7 +8,7 @@ ALL = "all_verses.txt"
 
 
 def extract_info(line):
-    raw_split = line.strip().replace('\xa0', ' ').split('\t')
+    raw_split = line.strip().split('\t')
     if len(raw_split) != 2:
         return None
     l = [raw_split[0]]
@@ -36,18 +38,19 @@ def add_dieresis(info):
         return None
     info[1] = splits.replace(candidate, repl)
 
+
 def filter_likely(info):
     length = info[2]
     if 'à' not in length:
         return length == '12'
     if length == '12 à 13' or length == '12 à 14':
-        return True #No dieresis
-    if length == '11 à 12': #dieresis
+        return True  # No dieresis
+    if length == '11 à 12':  # dieresis
         add_dieresis(info)
         return True
 
-
     return False
+
 
 def merge(info):
     raw = info[0]
@@ -68,17 +71,65 @@ def merge(info):
     info.append(res)
 
 
+def filter_alex():
+    full_info = []
+    likely = []
+    unlikely = []
 
-full_info = []
-likely = []
-unlikely = []
+    for l in open(path.join(DATA_PATH, ALL), 'r', encoding='utf8'):
+        l = l.replace('\xa0', ' ')
+        verse_info = extract_info(l)
+        # merge(verse_info)
+        full_info.append(verse_info)
+        if filter_likely(verse_info):
+            likely.append(verse_info)
+            print(l.replace('\n', ''))
+    return likely
 
-for l in open(path.join(DATA_PATH, ALL), 'r', encoding='utf8'):
-    verse_info = extract_info(l)
-    #merge(verse_info)
-    full_info.append(verse_info)
-    if filter_likely(verse_info):
-        likely.append(verse_info)
+
+def load_alexandrins(filepath, lex):
+    res = []
+    for l in open(path.join(filepath), 'r', encoding='utf8'):
+        info = extract_info(l)
+        if info is None:
+            continue
+        normalize_final(info, lex)
+        res.append(info)
+    return res
+
+matches = [
+            [['s'], ''],
+            [['out', 'ous', 'oux'], 'ou'],
+            [['art', 'ard'], 'ar'],
+            ]
+
+
+DECOMP_FIELD = 22
+miss = set()
+
+
+def normalize_final(line_info, lex):
+    line = line_info[1]
+    default = line.split('/')[-1]
+    tmp = line.replace('/', '').replace("'",' ').rstrip().lower()
+    tmp = tmp.replace('…','').replace('œ','oe').replace(')', '')
+
+    last= tmp.split()[-1]
+    if last in lex:
+        line_info.append(lex[last][DECOMP_FIELD].split('-')[-1])
     else:
-        unlikely.append(verse_info)
+        line_info.append(default)
+    return line_info
+
+IDX_FINAL = 5
+
+lexique = load_lexique()
+alx = load_alexandrins('../data/alexandrins.txt', lexique)
+by_final = defaultdict(list)
+
+for l in alx:
+    by_final[l[IDX_FINAL]].append(l)
+
+
+
 
